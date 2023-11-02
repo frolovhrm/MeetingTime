@@ -1,3 +1,5 @@
+""" Пример организации интерфейса десктоп приложения """
+
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton
 
 import sys
