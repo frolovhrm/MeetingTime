@@ -16,7 +16,7 @@ fnt_2 = ("Cosmic", 13, "italic")
 fnt_3 = ("Cosmic", 10, "bold")
 t = ""
 
-lbl = Label(master=wnd, text="Как вас зовут?")
+lbl = Label(master=wnd, text="Как вас зовут?", foreground="#01579B")
 lbl.configure(font=fnt_1)
 lbl.place(x=10, y=20)
 
