@@ -3,19 +3,21 @@
 На входе список со временем начала и окончание встреч, количество персон, количество переговорок, и их размер.
 """
 
-# print("\033c", end="")
-
 work_time = [9, 17]  # рабочее время
 meetingrooms_volume = {1: 12, 2: 15, 3: 6, 4: 12, 5: 20, 6: 6,
                        7: 12}  # номер и максимальное количество людей в переговорке
 meetings_time = [[10, 15, 13], [9, 11, 8], [16, 18, 4]]  # запланированные встречи [начало, окончание, люди]
-# meetings_time +=[[15, 18, 6], [10, 15, 2], [9, 11, 5], [15, 18, 6], [10, 15, 18], [9, 11, 5], [15, 18, 6], [10, 15,
-# 2], [11, 13, 5]]   # дополнительные данные для тестирования
+
+""" дополнительные данные для тестирования """
+meetings_time += [[15, 18, 6], [10, 15, 2], [9, 11, 5], [15, 18, 6], [10, 15, 18], [9, 11, 5], [15, 18, 6], [10, 15,
+2], [11, 13, 5]]
+
+
 
 list_meets = {}
 number_room = 0
 all_work_time = []  # список всех рабочих часов
-list_time_one_meet = []    # список часов одной встречи
+list_time_one_meet = []  # список часов одной встречи
 
 
 def makeDay(worktime):
@@ -33,6 +35,7 @@ def makeMeetLineTime(s, f):
         line_time += [time]
     return line_time
 
+
 def printCheck(dict_meet, meet_times):
     """Печатаем отчет о всех встречах"""
     print("\nВстреча\t   Время\tПереговорка\tУчастников")
@@ -41,16 +44,15 @@ def printCheck(dict_meet, meet_times):
             f"{key: ^7}\t   {meet_times[key - 1][0]:0>2}-{meet_times[key - 1][1]:0>2}\t{value: ^11}\t    {meetings_time[key - 1][2]:>2}")
 
 
-print(f"Список встреч [начало, окончание, кол-во чел.]\n{meetings_time}\n")
-print(f"Количество встреч\n{len(meetings_time)}\n")
-print(f"Свободно переговорных комнат\n{len(meetingrooms_volume)}\n")
-print(f"Переговорки : max. персон\n{meetingrooms_volume}\n")
+print(f"\nСписок встреч [начало, окончание, кол-во чел.] - {meetings_time}")
+print(f"всего встреч - {len(meetings_time)}\n")
+print(f"Доступно переговорных комнат {len(meetingrooms_volume)} - (номер: кол-во мест)\n{meetingrooms_volume}")
 
 # это список встреч для всех переговорках, создаем первую встречу
 meetings_list_all_day = [[]]
 
 for meeting in range(len(meetings_time)):  # ищем место для каждой встречи
-    added = False   # маркер, если встреча не добавлена в переговорку
+    added = False  # маркер, если встреча не добавлена в переговорку
     for room in range(len(meetings_list_all_day)):  # проверяем все открытые переговорки
         list_time_one_meet = makeMeetLineTime(meetings_time[meeting][0],
                                               meetings_time[meeting][1])  # список времени каждой встречи
