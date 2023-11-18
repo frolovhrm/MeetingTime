@@ -224,6 +224,8 @@ entry_pers_f4 = ttk.Entry(frame4)
 entry_pers_f4.place(x=30, y=175, height=25, width=60)
 lb7_f4 = Label(frame4, text="комнат",  anchor="w")
 lb7_f4.place(x=100, y=175, height=25, width=510)
+lb8_f4 = Label(frame4, text="* после сохранения нового количества комнат текущие настройки переговорок сбросятся",  anchor="w")
+lb8_f4.place(x=10, y=200, height=25, width=510)
 
 
 btn1_f4 = Button(frame4, text="Cохранить", command=seve_settings)
@@ -236,6 +238,6 @@ lb_frame5 = Label(frame5, text=about_prog,  anchor="center")
 lb_frame5.place(x=10, y=10, height=320, width=510)
 
 
-"""Начало и окончание рабочего времени. Шаг планированияю. Количество мест в переговорке."""
+
 
 wnd.mainloop()
