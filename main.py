@@ -28,22 +28,24 @@ text_meet = "Выберите дату-время\nначала и оконча�
 
 # сохраняет данные планируемой встречи
 def plan_this_meet():
-    maked_plan = True
+    maked_plan = check_end_view_meet_date()
     text_meet_lb2 = ""
-    all = all_meetings_list
+    all_meetings_list
     if maked_plan:
         all_meetings_list.append([meet_start, meet_end, persons_of_meeting])
 
         for i in range(len(all_meetings_list)):
-            start_date = all[i][0]
+            start_date = all_meetings_list[i][0]
             start_date_str = start_date.strftime("%m-%d-%Y %H:%M")
-            end_date = all[i][1]
+            end_date = all_meetings_list[i][1]
             end_date_str = end_date.strftime("%m-%d-%Y %H:%M")
-            pers= f"{all[i][2]}"
+            pers= f"{all_meetings_list[i][2]}"
             text_meet_lb2 += f"  {i+1}\t{start_date_str}\t\t{end_date_str}\t\t{pers}\n"
 
         print(all_meetings_list)
         lbl2_f3.configure(anchor="nw", text=text_meet_lb2)
+        text_meet_lb = "Данные о встрече\nвнесены в базу данных"
+        lb_text_meet.set(text_meet_lb)
 
     else:
         text_meet_lb = "эту встречу запланировать невозможно\n\n проверьте параметры"
@@ -57,56 +59,71 @@ def check_end_view_meet_date():
     global meet_end
     global meet_start
     global delta_meets_minutes, delta_meets_hour
+    maked_plan = False
     text_meet_lb = ""
 
     if cb_start_hour.get() and cb_start_minute.get():
         make_date = cal.get_date() + " " + cb_start_hour.get() + ":" + cb_start_minute.get()
         meet_start = datetime.datetime.strptime(make_date, '%m/%d/%y %H:%M')
     else:
-        meet_start = date_now
-        print("нет времени начала")
+        meet_start = False
+        # print("нет времени начала")
 
     if cb_end_hour.get() and cb_end_minute.get():
         make_date = cal.get_date() + " " + cb_end_hour.get() + ":" + cb_end_minute.get()
         meet_end = datetime.datetime.strptime(make_date, '%m/%d/%y %H:%M')
     else:
-        meet_end = date_now
-        print("нет времени окончания")
+        meet_end = False
+        # print("нет времени окончания")
 
-    if meet_start >= date_now:
-        if meet_end >= date_now:
-
-            if meet_start <= meet_end:
-                delta_meets = meet_end - meet_start
-                delta_meets_minutes = int(delta_meets.seconds / 60)
-                if delta_meets_minutes > 59:
-                    delta_meets_hour = int(delta_meets_minutes / 60)
-                    delta_meets_minutes = delta_meets_minutes % 60
-
-            else:
-                delta_meets_minutes = 0
-                text_meet_lb = "недопустимое время встречи!\n\n"
-
-            try:
-                persons_of_meeting = int(entry_pers.get())
-                if persons_of_meeting < 1:
-                    text_meet_lb = text_meet_lb + "необходимо цифрами ввести\n количество участников встречи"
+    if meet_start != False and meet_end != False:
+        # проверяем длительность встречи
+        if meet_start >= date_now:
+            if meet_end >= date_now:
+                if meet_start <= meet_end:
+                    delta_meets = meet_end - meet_start
+                    all_delta_meets_minutes = int(delta_meets.seconds / 60)
+                    # print(all_delta_meets_minutes)
+                        
+                    if all_delta_meets_minutes > 1: 
+                        # проверяем есть ли часы в минутах
+                        if all_delta_meets_minutes > 59:
+                            delta_meets_hour = int(all_delta_meets_minutes / 60)
+                            delta_meets_minutes = delta_meets_minutes % 60
+                        else:
+                            delta_meets_hour = 0
+                            delta_meets_minutes = all_delta_meets_minutes
+                        
+                        # проверяем количество персон на встрече
+                        try:
+                            persons_of_meeting = int(entry_pers.get())
+                            if persons_of_meeting > 1:
+                                text_meet_lb = f"начало встречи: \n{str(meet_start)}\n\n окончание встречи: \n{str(meet_end)}\n\n" \
+                                    f"продолжительностью {delta_meets_hour} ч. {delta_meets_minutes} мин.\n\n " \
+                                    f"количество участников {persons_of_meeting} чел. "
+                                maked_plan = True
+                            else:
+                                text_meet_lb = "необходимо цифрами ввести\n количество участников встречи"
+                        except ValueError:
+                                text_meet_lb = "необходимо цифрами ввести\n количество участников встречи"
+                    else:
+                        text_meet_lb = "продолжительность встречи\nслишком мала\n"
                 else:
-                    text_meet_lb = f"начало встречи: \n{str(meet_start)}\n\n окончание встречи: \n{str(meet_end)}\n\n" \
-                                   f"продолжительностью {delta_meets_hour} ч. {delta_meets_minutes} мин.\n\n " \
-                                   f"количество участников {persons_of_meeting} чел. "
-            except ValueError:
-                text_meet_lb = text_meet_lb + "необходимо цифрами ввести\n количество участников встречи"
-
-            # lb_text_meet.set(text_meet_lb)
+                    text_meet_lb = "продолжительность встречи\nслишком мала\n"
+            else:
+                text_meet_lb = "Время встречи уже прошло!\n\n Выберите будущее время."
+        else:
+            text_meet_lb = "Время встречи уже прошло!\n\n Выберите будущее время."
     else:
-        text_meet_lb = "Время встречи уже прошло!\n\n Выберите будущее время."
+        text_meet_lb = "Введите корректные время начала\nи окончания встречи"
 
     lb_text_meet.set(text_meet_lb)
 
+    return maked_plan
+
 
 # сохраняет настройки программы
-def save_settings():
+def get_and_save_program_settings():
     global work_hours
     work_hours.clear()
     ts = cb1_f5_start_work_hour.get()
@@ -164,12 +181,12 @@ def save_settings():
             one_room_prop.append(room_prop2)
             properties_of_meeting_rooms.append(one_room_prop)
             list_room.append(str(room + 1)) # создаем новый список комнат
-            show_table(create_table_as_text())
+            reload_meeting_table(create_table_meets_as_text())
         cb1_f2_meetroom_number.configure(values=list_room)  # загружаем новый список в чекбокс f2
         # print(properties_of_meeting_rooms)
 
 
-def create_table_as_text():
+def create_table_meets_as_text():
     text = "Комната\t\tЧеловек\t\tОпция1\t\tОпция2\n"
     for num_room in range(len(properties_of_meeting_rooms)):
         text += f" {num_room + 1}\t\t{properties_of_meeting_rooms[num_room][2]}\t\t{properties_of_meeting_rooms[num_room][3]}\t\t{properties_of_meeting_rooms[num_room][4]}\n"
@@ -177,15 +194,15 @@ def create_table_as_text():
     return text
 
 
-def show_table(text):
+def reload_meeting_table(text):
     lbl2_f2.configure(text=text, anchor="nw")
 
 
-def edit_table():
+def edit_meeting_table():
     number_room = int(cb1_f2_meetroom_number.get())
     new_room_volume = int(e1_f2_volume_of_meetingroom.get())
     properties_of_meeting_rooms[number_room - 1][2] = new_room_volume
-    show_table(create_table_as_text())
+    reload_meeting_table(create_table_meets_as_text())
 
 wnd = Tk()
 wnd.title("MeetingTime")
@@ -289,10 +306,10 @@ e2_f2_volume_of_meetingroom.place(x=215, y=60, height=25, width=40)
 e3_f2_volume_of_meetingroom = ttk.Entry(frame2, state=DISABLED)
 e3_f2_volume_of_meetingroom.place(x=315, y=60, height=25, width=40)
 
-btn1_f2 = Button(frame2, text="Изменить", command=edit_table)
+btn1_f2 = Button(frame2, text="Изменить", command=edit_meeting_table)
 btn1_f2.place(x=430, y=59, width=60, height=25)
 
-lbl2_f2 = Label(frame2, text=create_table_as_text(), anchor="nw", background="#FFFFFF")
+lbl2_f2 = Label(frame2, text=create_table_meets_as_text(), anchor="nw", background="#FFFFFF")
 lbl2_f2.place(x=20, y=100, height=220, width=340)
 
 """Закладка №3. Встречи"""
@@ -348,7 +365,7 @@ lb8_f5 = Label(frame5, foreground="red", text="Внимание! После со
                anchor="w")
 lb8_f5.place(x=10, y=210, height=60, width=510)
 
-btn1_f5 = Button(frame5, text="Cохранить", command=save_settings)
+btn1_f5 = Button(frame5, text="Cохранить", command=get_and_save_program_settings)
 btn1_f5.place(x=370, y=270, width=150, height=25)
 
 """Закладка №6. О программе"""
