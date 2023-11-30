@@ -2,3 +2,4 @@
 test.py
 windtest/
 tmp.py
+__pycache__/
