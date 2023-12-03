@@ -4,12 +4,17 @@ from tkinter.ttk import Combobox
 from tkinter import ttk
 import datetime
 from datetime import time
+import sqlite3 as sq
 
 
+from creat_db import createNewBase
+
+createNewBase()
+base_name = "meetingtime.db"
 DATE_NOW = datetime.datetime.now()
 all_meetings_list = []  # список всех встреч [start, finish, num_of_pers]
 
-""" Список переменных с начальными значениями, по умолчанию """
+""" Список переменных с начальными значениями(по умолчанию) """
 list_room = [1] # список номеров комнат
 properties_of_meeting_rooms = [[9, 18, 0, "no", "no"]]  # список всех переговорок с параметрами [начало работы, конец, кол-во мест]
 working_start = 9  # время начала работы
@@ -37,6 +42,7 @@ def plan_this_meet():
         lbl2_f3.configure(anchor="nw", text=text_meet_lb2)
         text_meet_lb = "Данные о встрече\nвнесены в базу данных"
         lb_text_meet.set(text_meet_lb)
+        push_base_new_metting(meet_start, meet_end, persons_of_meeting)
 
     else:
         text_meet_lb = "эту встречу запланировать невозможно\n\n проверьте параметры"
@@ -198,6 +204,17 @@ def edit_meetingroom_table():
     properties_of_meeting_rooms[number_room - 1][2] = new_room_volume
     reload_meetingrooms_table(create_table_meetingrooms_as_text())
 
+
+def push_base_new_metting(meet_start, meet_end, persons_of_meeting):
+    with sq.connect(base_name) as con:
+                print(meet_start, meet_end, persons_of_meeting)
+                cursor = con.cursor()
+                # cursor.execute(f"INSERT INTO Meetings datestart = {meet_start}  dateend = {meet_end} quantity = {persons_of_meeting}")
+                cursor.execute('INSERT INTO Meetings (datestart, dateend, quantity) VALUES (?, ?, ?)', (meet_start, meet_end, (persons_of_meeting)))
+
+def get_from_base_meeting_for_a_day():
+
+    pass
 
 wnd = Tk()
 wnd.title("MeetingTime")
