@@ -9,10 +9,10 @@ import sqlite3 as sq
 
 from creat_db import createNewBase
 
-createNewBase()
 base_name = "meetingtime.db"
+createNewBase()
 DATE_NOW = datetime.datetime.now()
-all_meetings_list = []  # список всех встреч [start, finish, num_of_pers]
+# all_meetings_list = []  # список всех встреч [start, finish, num_of_pers]
 
 """ Список переменных с начальными значениями(по умолчанию) """
 list_room = [1] # список номеров комнат
@@ -21,27 +21,12 @@ working_start = 9  # время начала работы
 working_finish = 18  # время окончания работы
 work_hours = ["09", "10", "11", "12", "13", "14", "15", "16", "17"]  # рабочие часы
 works_minutes = ["00", "10", "20", "30", "40", "50"]  # шаг планирования
+# date_meet = f"'{DATE_NOW.date()}'"
 
-# сохраняет данные планируемой встречи выводит их в форму 'встречи'
+# обрабатывает дуйствие кнопки сохранения заявки на встречу и вызывает фцнкцию записи в базу
 def plan_this_meet():
     drawn_up_plan, meet_start, meet_end, persons_of_meeting = check_end_view_meet_date()
-    text_meet_lb2 = ""
     if drawn_up_plan:
-        all_meetings_list.append([meet_start, meet_end, persons_of_meeting])
-
-        for i in range(len(all_meetings_list)):
-            start_date = all_meetings_list[i][0]
-            meeting_date = start_date.strftime("%d %m %Y")
-            start_time = start_date.strftime("%H:%M")
-            end_date = all_meetings_list[i][1]
-            end_time = end_date.strftime("%H:%M")
-            pers = f"{all_meetings_list[i][2]}"
-            text_meet_lb2 += f"  {i + 1}\t{meeting_date}\t{start_time}\t\t{end_time}\t\t{pers}\n"
-
-        print(all_meetings_list)
-        lbl2_f3.configure(anchor="nw", text=text_meet_lb2)
-        text_meet_lb = "Данные о встрече\nвнесены в базу данных"
-        lb_text_meet.set(text_meet_lb)
         push_base_new_metting(meet_start, meet_end, persons_of_meeting)
 
     else:
@@ -150,7 +135,7 @@ def get_and_save_program_settings():
     # print(works_minutes)
 
     # global num_of_room
-    # global properties_of_meeting_rooms
+    global properties_of_meeting_rooms
     # global list_room
     work_start = 9  #
     work_finish = 18  #
@@ -161,8 +146,8 @@ def get_and_save_program_settings():
             return
         if num_of_room > 12:
             num_of_room = 12
-        # properties_of_meeting_rooms = []
-        # list_room = []
+        properties_of_meeting_rooms = []
+        list_room = []
         for room in range(num_of_room):
             one_room_prop = []
             room_volume = 0
@@ -205,16 +190,65 @@ def edit_meetingroom_table():
     reload_meetingrooms_table(create_table_meetingrooms_as_text())
 
 
+# сохраняет в базу заявку на новую встречу
 def push_base_new_metting(meet_start, meet_end, persons_of_meeting):
     with sq.connect(base_name) as con:
-                print(meet_start, meet_end, persons_of_meeting)
-                cursor = con.cursor()
-                # cursor.execute(f"INSERT INTO Meetings datestart = {meet_start}  dateend = {meet_end} quantity = {persons_of_meeting}")
-                cursor.execute('INSERT INTO Meetings (datestart, dateend, quantity) VALUES (?, ?, ?)', (meet_start, meet_end, (persons_of_meeting)))
+        # print(meet_start, meet_end, persons_of_meeting)
+        date_meet = meet_start.date()
+        time_start = meet_start.time()
+        time_end = meet_end.time()
+        cursor = con.cursor()
+        # print(date_meet, time_start, time_end, persons_of_meeting)
+        cursor.execute('INSERT INTO Meetings (datemeet, timestart, timeend, quantity) VALUES (?, ?, ?, ?)', (date_meet, str(time_start), str(time_end), persons_of_meeting))
+    get_all_unique_date_from_base()
 
+
+# получает из базы список всех встреч на указанную дату и выводит в окно
 def get_from_base_meeting_for_a_day():
+    date_meet = check_date_meeting()
+    with sq.connect(base_name) as con:
+        # print(date_meet)
+        date_meet = f"{date_meet}"
+        cursor = con.cursor()
+        # print(date_meet)
+        text = f"SELECT * FROM Meetings WHERE datemeet = {date_meet}"
+        # print(text)
+        cursor.execute(text)
+        list_meet_one_date = cursor.fetchall()
+        # print(list_meet_one_date)
+        text_meet_lb2 = "\n\n\tвстречи не найдены"
+        if list_meet_one_date:
+            text_meet_lb2 = " "
+            for i in range(len(list_meet_one_date)):
+                time_start = list_meet_one_date[i][1]
+                time_end = list_meet_one_date[i][2]
+                persons_of_meeting = list_meet_one_date[i][3]
+                text_meet_lb2 += f"{i + 1}\t{date_meet}\t{time_start}\t\t{time_end}\t\t{persons_of_meeting}\n"
 
-    pass
+        lbl3_f3.configure(anchor="nw", text=text_meet_lb2)
+        # print(list_meet_one_date)
+
+
+# находит в базе все уникальные даты в которые есть встречи
+def get_all_unique_date_from_base():
+    with sq.connect(base_name) as con:
+        cursor = con.cursor()
+        text = f"SELECT DISTINCT datemeet FROM Meetings"
+        cursor.execute(text)
+        list_all_meet_date = cursor.fetchall()
+        # print(f"список уникальных дат {list_all_meet_date}")
+    return list_all_meet_date
+
+
+# проверяет значение поля и воздращает данные
+def check_date_meeting():
+    date = cb3_f3_date.get()
+    if date != "":
+        date_meet = f"'{date}'"
+    else:
+        date_meet = f"'{DATE_NOW.date()}'"
+    return date_meet
+
 
 wnd = Tk()
 wnd.title("MeetingTime")
@@ -223,6 +257,7 @@ wnd.resizable(False, False)
 
 notebook = ttk.Notebook(wnd)
 notebook.pack(expand=True, fill=BOTH)
+get_all_unique_date_from_base()
 
 # создаем фреймы
 frame1 = ttk.Frame(notebook)
@@ -326,24 +361,22 @@ lbl2_f2 = Label(frame2, text=create_table_meetingrooms_as_text(), anchor="nw", b
 lbl2_f2.place(x=20, y=100, height=220, width=340)
 
 """Закладка №3. Встречи"""
-lbl2_f3 = Label(frame3, text="Дата", anchor="w")
-lbl2_f3.place(x=20, y=15, height=25, width=80)
+lbl1_f3 = Label(frame3, text="Дата", anchor="w")
+lbl1_f3.place(x=20, y=15, height=25, width=80)
 
-cb3_f3_year = Combobox(frame3, values=list_room, state="readonly")
-cb3_f3_year.place(x=60, y=15, height=25, width=70)
+list = get_all_unique_date_from_base()
+cb3_f3_date = Combobox(frame3, values=list, state="readonly")
+cb3_f3_date.place(x=60, y=15, height=25, width=90)
 
-cb3_f3_year = Combobox(frame3, values=list_room, state="readonly")
-cb3_f3_year.place(x=140, y=15, height=25, width=70)
+lbl2_f3_text = "  #                 дата                   начало                окончание        кол-во"
+lbl2_f3 = Label(frame3, text=lbl2_f3_text, anchor="w")
+lbl2_f3.place(x=20, y=45, height=25, width=380)
 
-cb3_f3_year = Combobox(frame3, values=list_room, state="readonly")
-cb3_f3_year.place(x=220, y=15, height=25, width=70)
+lbl3_f3 = Label(frame3, text="нет встреч", anchor="center", background="#FFFFFF")
+lbl3_f3.place(x=20, y=70, height=250, width=380)
 
-lbl3_f3_text = "  #                 дата                начало                окончание           кол-во"
-lbl3_f3 = Label(frame3, text=lbl3_f3_text, anchor="w")
-lbl3_f3.place(x=20, y=45, height=25, width=380)
-
-lbl2_f3 = Label(frame3, text="нет встреч", anchor="center", background="#FFFFFF")
-lbl2_f3.place(x=20, y=70, height=250, width=380)
+btn1_f3 = Button(frame3, text="Проверить", command=get_from_base_meeting_for_a_day)
+btn1_f3.place(x=430, y=15, width=80, height=25)
 
 """Закладка №4. Отчет"""
 
