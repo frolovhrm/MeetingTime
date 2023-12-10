@@ -120,7 +120,7 @@ def get_and_save_program_settings():
             work_hours.append(f"{wh:02}")
             cb_start_hour.configure(values=work_hours)
             cb_end_hour.configure(values=work_hours)
-    # print(work_hours)
+    print(work_hours)
 
     global works_minutes
     works_minutes.clear()
@@ -132,7 +132,7 @@ def get_and_save_program_settings():
             works_minutes.append(f"{step:02}")
             cb_start_minute.configure(values=works_minutes)
             cb_end_minute.configure(values=works_minutes)
-    # print(works_minutes)
+    print(works_minutes)
 
     # global num_of_room
     global properties_of_meeting_rooms
@@ -153,10 +153,10 @@ def get_and_save_program_settings():
             room_volume = 0
             room_prop1 = "no"
             room_prop2 = "no"
-            first_time = time(work_start, 0, 0)
-            second_time = time(work_finish, 0, 0)
-            one_room_prop.append(first_time)
-            one_room_prop.append(second_time)
+            # first_time = time(work_start, 0, 0)
+            # second_time = time(work_finish, 0, 0)
+            # one_room_prop.append(first_time)
+            # one_room_prop.append(second_time)
             one_room_prop.append(room_volume)
             one_room_prop.append(room_prop1)
             one_room_prop.append(room_prop2)
@@ -164,7 +164,7 @@ def get_and_save_program_settings():
             list_room.append(str(room + 1))  # создаем новый список комнат
             reload_meetingrooms_table(create_table_meetingrooms_as_text())
         cb1_f2_meetroom_number.configure(values=list_room)  # загружаем новый список в чекбокс f2
-        # print(properties_of_meeting_rooms)
+        print(properties_of_meeting_rooms)
     except:
         pass
 
@@ -173,7 +173,7 @@ def get_and_save_program_settings():
 def create_table_meetingrooms_as_text():
     text = "Комната\t\tЧеловек\t\tОпция1\t\tОпция2\n"
     for num_room in range(len(properties_of_meeting_rooms)):
-        text += f" {num_room + 1}\t\t{properties_of_meeting_rooms[num_room][2]}\t\t{properties_of_meeting_rooms[num_room][3]}\t\t{properties_of_meeting_rooms[num_room][4]}\n"
+        text += f" {num_room + 1}\t\t{properties_of_meeting_rooms[num_room][0]}\t\t{properties_of_meeting_rooms[num_room][1]}\t\t{properties_of_meeting_rooms[num_room][2]}\n"
     return text
 
 
@@ -183,10 +183,10 @@ def reload_meetingrooms_table(text):
 
 
 # меняет количество участников в существующих переговорках
-def edit_meetingroom_table():
+def edit_meetingroom_table(): 
     number_room = int(cb1_f2_meetroom_number.get())
     new_room_volume = int(e1_f2_volume_of_meetingroom.get())
-    properties_of_meeting_rooms[number_room - 1][2] = new_room_volume
+    properties_of_meeting_rooms[number_room - 1][0] = new_room_volume
     reload_meetingrooms_table(create_table_meetingrooms_as_text())
 
 
