@@ -6,6 +6,7 @@ def createNewBase():
         cur = con.cursor()
 
         cur.execute("""CREATE TABLE IF NOT EXISTS Meetings (
+        _id INTEGER PRIMARY KEY AUTOINCREMENT,
         datemeet TEXT NOT NULL,
         timestart TEXT NOT NULL,
         timeend TEXT NOT NULL,

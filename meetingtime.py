@@ -205,6 +205,9 @@ def push_base_new_metting(meet_start, meet_end, persons_of_meeting):
 
 # получает из базы список всех встреч на указанную дату и выводит в окно
 def get_from_base_meeting_for_a_day():
+    list = get_all_unique_date_from_base()
+    cb3_f3_date.configure(values=list)
+    
     date_meet = check_date_meeting()
     with sq.connect(base_name) as con:
         # print(date_meet)
@@ -220,10 +223,11 @@ def get_from_base_meeting_for_a_day():
         if list_meet_one_date:
             text_meet_lb2 = " "
             for i in range(len(list_meet_one_date)):
-                time_start = list_meet_one_date[i][1]
-                time_end = list_meet_one_date[i][2]
-                persons_of_meeting = list_meet_one_date[i][3]
-                text_meet_lb2 += f"{i + 1}\t{date_meet}\t{time_start}\t\t{time_end}\t\t{persons_of_meeting}\n"
+                num_meet = list_meet_one_date[i][0]
+                time_start = list_meet_one_date[i][2]
+                time_end = list_meet_one_date[i][3]
+                persons_of_meeting = list_meet_one_date[i][4]
+                text_meet_lb2 += f"{num_meet}\t{date_meet}\t{time_start}\t\t{time_end}\t\t{persons_of_meeting}\n"
 
         lbl3_f3.configure(anchor="nw", text=text_meet_lb2)
         # print(list_meet_one_date)
