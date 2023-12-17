@@ -6,29 +6,39 @@ import datetime
 from datetime import time
 import sqlite3 as sq
 
-
+from settings import count_room, seve_program_settings, load_program_settings
 from creat_db import createNewBase
+
 
 base_name = "meetingtime.db"
 createNewBase()
 DATE_NOW = datetime.datetime.now()
-# all_meetings_list = []  # список всех встреч [start, finish, num_of_pers]
+
+
 
 """ Список переменных с начальными значениями(по умолчанию) """
-list_room = [1] # список номеров комнат
-properties_of_meeting_rooms = [[9, 18, 0, "no", "no"]]  # список всех переговорок с параметрами [начало работы, конец, кол-во мест]
-working_start = 9  # время начала работы
-working_finish = 18  # время окончания работы
+# list_room = [1, 2] # список номеров комнат
+properties_of_meeting_rooms = [[50, "no", "no"], [50, "no", "no"]]  # список всех переговорок с параметрами [кол-во мест, свойство1, свойстово2]
+# work_hours, works_minutes, properties_of_meeting_rooms = load_program_settings()
+list_room = count_room(properties_of_meeting_rooms)
+# working_start = 9  # время начала работы
+# working_finish = 18  # время окончания работы
 work_hours = ["09", "10", "11", "12", "13", "14", "15", "16", "17"]  # рабочие часы
 works_minutes = ["00", "10", "20", "30", "40", "50"]  # шаг планирования
 # date_meet = f"'{DATE_NOW.date()}'"
+plans_all_miteeng_rooms = []
+list_table_item = []
+
+
+
+
+
 
 # обрабатывает дуйствие кнопки сохранения заявки на встречу и вызывает фцнкцию записи в базу
 def plan_this_meet():
     drawn_up_plan, meet_start, meet_end, persons_of_meeting = check_end_view_meet_date()
     if drawn_up_plan:
         push_base_new_metting(meet_start, meet_end, persons_of_meeting)
-
     else:
         text_meet_lb = "эту встречу запланировать невозможно\n\n проверьте параметры"
         lb_text_meet.set(text_meet_lb)
@@ -134,11 +144,9 @@ def get_and_save_program_settings():
             cb_end_minute.configure(values=works_minutes)
     print(works_minutes)
 
-    # global num_of_room
     global properties_of_meeting_rooms
-    # global list_room
-    work_start = 9  #
-    work_finish = 18  #
+    # if work_start = 9  #
+    # work_finish = 18  #
 
     try:
         num_of_room = int(entry_pers_f5.get())
@@ -153,10 +161,6 @@ def get_and_save_program_settings():
             room_volume = 0
             room_prop1 = "no"
             room_prop2 = "no"
-            # first_time = time(work_start, 0, 0)
-            # second_time = time(work_finish, 0, 0)
-            # one_room_prop.append(first_time)
-            # one_room_prop.append(second_time)
             one_room_prop.append(room_volume)
             one_room_prop.append(room_prop1)
             one_room_prop.append(room_prop2)
@@ -165,6 +169,7 @@ def get_and_save_program_settings():
             reload_meetingrooms_table(create_table_meetingrooms_as_text())
         cb1_f2_meetroom_number.configure(values=list_room)  # загружаем новый список в чекбокс f2
         print(properties_of_meeting_rooms)
+        seve_program_settings(work_hours, works_minutes, properties_of_meeting_rooms)
     except:
         pass
 
@@ -195,8 +200,8 @@ def push_base_new_metting(meet_start, meet_end, persons_of_meeting):
     with sq.connect(base_name) as con:
         # print(meet_start, meet_end, persons_of_meeting)
         date_meet = meet_start.date()
-        time_start = meet_start.time()
-        time_end = meet_end.time()
+        time_start = meet_start.time().strftime("%H.%M")
+        time_end = meet_end.time().strftime("%H.%M")
         cursor = con.cursor()
         # print(date_meet, time_start, time_end, persons_of_meeting)
         cursor.execute('INSERT INTO Meetings (datemeet, timestart, timeend, quantity) VALUES (?, ?, ?, ?)', (date_meet, str(time_start), str(time_end), persons_of_meeting))
@@ -208,7 +213,7 @@ def get_from_base_meeting_for_a_day():
     list = get_all_unique_date_from_base()
     cb3_f3_date.configure(values=list)
     
-    date_meet = check_date_meeting()
+    date_meet = check_date_box_in_the_planing_frame()
     with sq.connect(base_name) as con:
         # print(date_meet)
         date_meet = f"{date_meet}"
@@ -244,14 +249,148 @@ def get_all_unique_date_from_base():
     return list_all_meet_date
 
 
-# проверяет значение поля и воздращает данные
-def check_date_meeting():
+# проверяет значение поля Дата в Отчете и воздращает данные
+def check_date_box_in_the_planing_frame():
     date = cb3_f3_date.get()
     if date != "":
         date_meet = f"'{date}'"
     else:
         date_meet = f"'{DATE_NOW.date()}'"
     return date_meet
+
+
+# проверяет значение поля Дата во Встречах и воздращает данные
+def check_date_box_in_the_meeting_frame():
+    date = cb3_f4_date.get()
+    if date != "":
+        date_meet = f"'{date}'"
+    else:
+        date_meet = f"'{DATE_NOW.date()}'"
+    return date_meet
+
+
+# возвращает выборку из базы, о всех встречах на дату
+def get_meeting_list_on_this_date(this_date):
+    date_meet = this_date
+    with sq.connect(base_name) as con:
+        cursor = con.cursor()
+        text = f"SELECT * FROM Meetings WHERE datemeet = {date_meet}"
+        cursor.execute(text)
+        list_meet_one_date = cursor.fetchall()
+    # print(f"get_meeting_list_on_this_date = {this_date} - {list_meet_one_date}")
+    return list_meet_one_date
+
+
+# помечает встречу в базе как запланированную
+def make_meeting_as_planed():
+
+    pass
+
+
+# помечает встречу в базе как не запланированную
+def make_meeting_as_unplaned():
+
+    pass
+
+
+# создает пустой шаблон плана встреч на дату
+def make_base_plan_for_all_miteeng_rooms():
+    global plans_all_miteeng_rooms
+    plans_all_miteeng_rooms = []
+    for i in range(len(properties_of_meeting_rooms)):
+        plans_all_miteeng_rooms.append([])
+
+
+# заполняет шаблон плана встреч на указанную дату
+def creating_plan_all_rooms_this_day():
+    global plans_all_miteeng_rooms
+    plans_all_miteeng_rooms = []
+    make_base_plan_for_all_miteeng_rooms()
+    this_date = check_date_box_in_the_meeting_frame()
+    print(f"Make a plan, for this_date - {this_date}")
+    list_meet_one_date = get_meeting_list_on_this_date(this_date) # получаем список всех встреч из базы
+    print(f"list_meet_one_date - {list_meet_one_date}")
+    for meet in range(len(list_meet_one_date)): # начинаем искать место для каждой встречи
+        if list_meet_one_date[meet][7] == 1: # если встреча отмечена как запланированная, пропускаем.
+            break
+
+        meet_num = list_meet_one_date[meet][0] # время начала встречи
+        meet_start = list_meet_one_date[meet][2] # время начала встречи
+        meet_end = list_meet_one_date[meet][3] # время окончания встречи
+        meet_pers = int(list_meet_one_date[meet][4]) # кол-во участников встречи
+        print(list_meet_one_date[meet])
+        print(f"properties_of_meeting_rooms = {properties_of_meeting_rooms}")
+
+        for room in range(len(properties_of_meeting_rooms)): # ищем в каждой переговорке
+            volume = properties_of_meeting_rooms[room][0]   # кол-во мест в комнате
+            if meet_pers <= volume:   # если мест хватает
+                this_room_meeting_list = plans_all_miteeng_rooms[room] # получаем план встреч конкретной переговорки
+                print(f"this_room_meeting_list = {this_room_meeting_list}")
+                cros = False # пересечений нет 
+                if this_room_meeting_list:  # если план не пустой
+                    for i in range(len(this_room_meeting_list)):  # проверяем его на пересечения
+                        print(f"\nПереговорка {room} ее встречи {this_room_meeting_list[i]}")
+                        if meet_start >= this_room_meeting_list[i][1] and meet_start < this_room_meeting_list[i][2]:
+                            print(f"существующая встреча {i} есть пересечение по старту {meet_start} <= {this_room_meeting_list[i][0]} или {meet_start} > {this_room_meeting_list[i][1]}")
+                            cros = True
+                        if meet_end <= this_room_meeting_list[i][1]  and meet_end > this_room_meeting_list[i][2]:
+                            print(f"существующая встреча {i} есть пересечение по финишу {meet_end} => {this_room_meeting_list[i][0]} или {meet_end} < {this_room_meeting_list[i][1]}")
+                            cros = True
+                else:
+                    print(f"\nВ переговорке {room} еще нет встреч, значит ", end="")
+                    pass    
+                if cros == False: # если пересечений ненашлось добавляем встречу в план комнаты
+                    print(f"встречу № {meet} на {meet_pers} чел. проводим в комнате № {room} from {meet_start} to {meet_end}")
+                    plans_all_miteeng_rooms[room].append([meet_num, meet_start, meet_end, meet_pers])
+                    break
+                else:
+                    print(f"В переговорке {room} встреча № {meet} на {meet_pers} чел. незапланирована, нет свободного времени!")
+                    continue
+
+            else:   # если мест не хватает
+                print(f"\nВстречу № {meet} на {meet_pers} чел. в комнате № {room} сделать не можем, мало места!")
+                pass
+
+    print(f"plans_all_miteeng_rooms {plans_all_miteeng_rooms}")
+    return plans_all_miteeng_rooms
+
+
+# выводит в консоль отчет о уже запланированных встречах на дату
+def print_meetings_plan_on_date(list_meetings):
+    for room in range(len(list_meetings)):
+        for meeting in range(len(list_meetings[room])):
+            print(f"Комната {room} встреча {list_meetings[room][meeting][0]} с {list_meetings[room][meeting][1]}  по {list_meetings[room][meeting][2]} на {list_meetings[room][meeting][3]} человек")
+
+
+# создает отчет о уже запланированных встречах на дату
+def make_list_for_table_meetings_plan_on_date(list_meetings):
+    list_for_table_meetings_plan_on_date = []
+    for room in range(len(list_meetings)):
+        for meeting in range(len(list_meetings[room])):
+            meet = (room, list_meetings[room][meeting][0], list_meetings[room][meeting][1], list_meetings[room][meeting][2], list_meetings[room][meeting][3])
+            list_for_table_meetings_plan_on_date.append(meet)
+    print(f"list_for_table_meetings_plan_on_date - {list_for_table_meetings_plan_on_date}")
+    return list_for_table_meetings_plan_on_date
+
+
+def drow_new_table_resive():
+    global list_table_item
+    for i in list_table_item:
+        tree.delete(i)
+
+    # получаем план всех встреч на дату
+
+    plan_for_tree = creating_plan_all_rooms_this_day()
+    meets = make_list_for_table_meetings_plan_on_date(plan_for_tree)
+
+    list_table_item = []
+    # добавляем данные
+    for meet in meets:
+        tree.insert("", END, values=meet)
+
+    for meet in tree.get_children(""):
+        list_table_item.append(meet)
+
 
 
 wnd = Tk()
@@ -261,7 +400,6 @@ wnd.resizable(False, False)
 
 notebook = ttk.Notebook(wnd)
 notebook.pack(expand=True, fill=BOTH)
-get_all_unique_date_from_base()
 
 # создаем фреймы
 frame1 = ttk.Frame(notebook)
@@ -278,7 +416,7 @@ frame5.pack(fill=BOTH, expand=True)
 frame6.pack(fill=BOTH, expand=True)
 
 # добавляем фреймы в качестве вкладок
-notebook.add(frame1, text=" Планирование ")
+notebook.add(frame1, text=" Заявки ")
 notebook.add(frame2, text=" Переговорки ")
 notebook.add(frame3, text=" Встречи ")
 notebook.add(frame4, text=" Отчет ")
@@ -292,7 +430,7 @@ cal.place(x=20, y=20)
 # создаем экземпляр класса для последующего обновления по требованию
 lb_text_meet = StringVar()
 
-"""Закладка №1. Встречи"""
+"""Закладка №1. Заявки"""
 lb1_start_hour = Label(frame1, text="Начало встречи", anchor="center")
 lb1_start_hour.place(x=20, y=220, height=20, width=120)
 
@@ -383,6 +521,36 @@ btn1_f3 = Button(frame3, text="Проверить", command=get_from_base_meetin
 btn1_f3.place(x=430, y=15, width=80, height=25)
 
 """Закладка №4. Отчет"""
+lbl1_f4 = Label(frame4, text="Дата", anchor="w")
+lbl1_f4.place(x=20, y=15, height=25, width=80)
+
+list = get_all_unique_date_from_base()
+cb3_f4_date = Combobox(frame4, values=list, state="readonly")
+cb3_f4_date.place(x=60, y=15, height=25, width=90)
+
+btn1_f4 = Button(frame4, text="Планировать", command=drow_new_table_resive)
+btn1_f4.place(x=430, y=15, width=90, height=25)
+
+# определяем столбцы
+columns = ("room", "num", "for", "to", "pers")
+
+# создаем обект таблицу
+tree = ttk.Treeview(frame4, columns=columns, show="headings")
+tree.place(x=20, y=45, height=251, width=353)
+ 
+# определяем заголовки
+tree.heading("room", text="комната") 
+tree.heading("num", text="встреча")
+tree.heading("for", text="с")
+tree.heading("to", text="по")
+tree.heading("pers", text="чел.")
+
+# настраиваем столбцы
+tree.column("#1", stretch=NO, width=70)
+tree.column("#2", stretch=NO, width=70)
+tree.column("#3", stretch=NO, width=70)
+tree.column("#4", stretch=NO, width=70)
+tree.column("#5", stretch=NO, width=70)
 
 """Закладка №5. Настройки"""
 lb1_f5 = Label(frame5, text="Установите диапазон планирования рабочего времени (в рамках одних суток):", anchor="w")
@@ -413,8 +581,8 @@ entry_pers_f5 = ttk.Entry(frame5)
 entry_pers_f5.place(x=30, y=175, height=25, width=60)
 lb7_f5 = Label(frame5, text="комнат (max. 12)", anchor="w")
 lb7_f5.place(x=100, y=175, height=25, width=510)
-lb8_f5 = Label(frame5, foreground="red", text="Внимание! После сохранения новых параметров\n текущие настройки программы изменятся",
-               anchor="w")
+lb8_f5 = Label(frame5, foreground="red", text="Внимание! После сохранения новых параметров\n" \
+               "текущие настройки программы изменятся, и все будущие встречи перейдут в статус незапланировано.", anchor="w")
 lb8_f5.place(x=10, y=210, height=60, width=510)
 
 btn1_f5 = Button(frame5, text="Cохранить", command=get_and_save_program_settings)
