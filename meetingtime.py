@@ -29,6 +29,11 @@ def planing_this_meet():
     drawn_up_plan, meet_start, meet_end, persons_of_meeting = check_end_view_meet_date()
     if drawn_up_plan:
         push_base_new_metting(meet_start, meet_end, persons_of_meeting)
+        cb1_f3_date.configure(values=list_uniq_date)
+        cb3_f4_date.configure(values=list_uniq_date)
+        text_meet_lb = "Заявка размещена"
+        lb_text_meet.set(text_meet_lb)
+
     else:
         text_meet_lb = "эту встречу запланировать невозможно\n\n проверьте параметры"
         lb_text_meet.set(text_meet_lb)
@@ -177,13 +182,14 @@ def edit_meetingroom_table():
 
 # сохраняет в базу заявку на новую встречу
 def push_base_new_metting(meet_start, meet_end, persons_of_meeting):
+    global list_uniq_date
     with sq.connect(base_name) as con:
         date_meet = meet_start.date()
         time_start = meet_start.time().strftime("%H.%M")
         time_end = meet_end.time().strftime("%H.%M")
         cursor = con.cursor()
         cursor.execute('INSERT INTO Meetings (datemeet, timestart, timeend, quantity) VALUES (?, ?, ?, ?)', (date_meet, str(time_start), str(time_end), persons_of_meeting))
-    get_all_unique_date_from_base(base_name, DATE_NOW)
+    list_uniq_date = get_all_unique_date_from_base(base_name, DATE_NOW)
 
 
 # получает из базы список всех встреч на указанную дату и выводит в окно
